@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- msbuild project for build the OpenRCT2 3rd party libraries -->
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <Target Name="Clean">
+    <Message Text="Cleaning up git repository..." Importance="high" />
+    <Exec Command="git clean -fdX" />
+    <Exec Command="git submodule foreach &quot;git clean -fdx &amp;&amp; git checkout .&quot;" />
+  </Target>
+  <Target Name="Build">
+    <Message Text="Building dependencies..." Importance="high" />
+  </Target>
+</Project>
