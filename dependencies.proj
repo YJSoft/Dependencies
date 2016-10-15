@@ -1,12 +1,78 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- msbuild project for build the OpenRCT2 3rd party libraries -->
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <PropertyGroup>
+    <RootDir>$(MsBuildThisFileDirectory)</RootDir>
+    <ArtifactsDir>$(RootDir)artifacts\</ArtifactsDir>
+    <IncludeDir>$(ArtifactsDir)include\</IncludeDir>
+  </PropertyGroup>
+
   <Target Name="Clean">
     <Message Text="Cleaning up git repository..." Importance="high" />
-    <Exec Command="git clean -fdX" />
-    <Exec Command="git submodule foreach &quot;git clean -fdx &amp;&amp; git checkout .&quot;" />
+    <Exec Command="git clean -fdX"
+          StandardOutputImportance="normal" />
+    <Exec Command="git submodule foreach &quot;git clean -fdx &amp;&amp; git checkout .&quot;"
+          StandardOutputImportance="normal" />
   </Target>
+
   <Target Name="Build">
     <Message Text="Building dependencies..." Importance="high" />
   </Target>
+
+  <Target Name="CopyHeaders">
+    <MakeDir Directories="$(IncludeDir)" />
+    <Copy SourceFiles="%(HeaderItems.Identity)" DestinationFolder="$(IncludeDir)%(HeaderItems.Destination)" />
+  </Target>
+
+  <!-- Headers to include in the dependencies package -->
+  <ItemGroup>
+    <HeaderItems Include="src\breakpad\src\src\client\windows\handler\*.h">
+      <Destination>breakpad\client\windows\handler</Destination>
+    </HeaderItems>
+    <HeaderItems Include="src\breakpad\src\src\client\windows\sender\*.h">
+      <Destination>breakpad\client\windows\sender</Destination>
+    </HeaderItems>
+    <HeaderItems Include="src\breakpad\src\src\client\windows\common\*.h">
+      <Destination>breakpad\client\windows\common</Destination>
+    </HeaderItems>
+    <HeaderItems Include="src\breakpad\src\src\common\*.h">
+      <Destination>breakpad\common</Destination>
+    </HeaderItems>
+    <HeaderItems Include="src\breakpad\src\src\common\windows\*.h">
+      <Destination>breakpad\common\windows</Destination>
+    </HeaderItems>
+    <HeaderItems Include="src\breakpad\src\src\client\windows\crash_generation\*.h">
+      <Destination>breakpad\client\windows\crash_generation</Destination>
+    </HeaderItems>
+    <HeaderItems Include="src\breakpad\src\src\google_breakpad\common\*.h">
+      <Destination>breakpad\google_breakpad\common</Destination>
+    </HeaderItems>
+    <HeaderItems Include="src\sdl\include\*.h">
+      <Destination>sdl</Destination>
+    </HeaderItems>
+    <HeaderItems Include="src\sdl_ttf\*.h">
+      <Destination>sdl_ttf</Destination>
+    </HeaderItems>
+    <HeaderItems Include="src\libpng\*.h">
+      <Destination>libpng</Destination>
+    </HeaderItems>
+    <HeaderItems Include="src\zlib\*.h">
+      <Destination>zlib</Destination>
+    </HeaderItems>
+    <HeaderItems Include="src\jansson\include\*.h">
+      <Destination>jansson</Destination>
+    </HeaderItems>
+    <HeaderItems Include="src\libspeex\*.h">
+      <Destination>libspeex</Destination>
+    </HeaderItems>
+    <HeaderItems Include="src\libspeex\speex\*.h">
+      <Destination>libspeex\speex</Destination>
+    </HeaderItems>
+    <HeaderItems Include="src\curl\include\curl\*.h">
+      <Destination>curl</Destination>
+    </HeaderItems>
+    <HeaderItems Include="src\openssl\include\openssl\*.h">
+      <Destination>openssl</Destination>
+    </HeaderItems>
+  </ItemGroup>
 </Project>
