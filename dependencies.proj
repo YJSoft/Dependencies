@@ -97,6 +97,26 @@
     <Copy SourceFiles="@(OutputItems)" DestinationFolder="$(BinDir)" />
   </Target>
 
+  <Target Name="openssl">
+    <PropertyGroup>
+      <TempDir>$(RootDir)temp\</TempDir>
+      <OpenSSLVersion>1.0.2j</OpenSSLVersion>
+      <OpenSSLDownloadUrl>http://www.npcglib.org/~stathis/downloads/openssl-$(OpenSSLVersion)-vs2015.7z</OpenSSLDownloadUrl>
+      <OpenSSLDownloadOut>$(RootDir)temp\openssl-precompiled.7z</OpenSSLDownloadOut>
+    </PropertyGroup>
+    <Message Text="Downloading precompiled openssl..." Importance="high" />
+    <RemoveDir Directories="temp" />
+    <MakeDir Directories="temp" />
+    <Exec Command="powershell -ExecutionPolicy Unrestricted -Command &quot;Invoke-WebRequest '$(OpenSSLDownloadUrl)' -OutFile '$(OpenSSLDownloadOut)'&quot;"
+          StandardOutputImportance="normal" />
+    <Exec Command="7z x $(OpenSSLDownloadOut) -o$(TempDir)"
+          StandardOutputImportance="normal" />
+    <Copy SourceFiles="$(TempDir)openssl-$(OpenSSLVersion)-vs2015\lib\libeay32MT.lib" DestinationFiles="$(BinDir)libeay32.lib" />
+    <Copy Condition="'$(Platform)'=='Win32'" SourceFiles="$(TempDir)openssl-$(OpenSSLVersion)-vs2015\lib\libeay32MT.lib" DestinationFiles="$(BinDir)libeay32.lib" />
+    <Copy Condition="'$(Platform)'=='x64'" SourceFiles="$(TempDir)openssl-$(OpenSSLVersion)-vs2015\lib64\libeay32MT.lib" DestinationFiles="$(BinDir)libeay32.lib" />
+    <RemoveDir Directories="temp" />
+  </Target>
+
   <Target Name="CopyHeaders">
     <MakeDir Directories="$(IncludeDir)" />
     <Copy SourceFiles="%(HeaderItems.Identity)" DestinationFolder="$(IncludeDir)%(HeaderItems.Destination)" />
