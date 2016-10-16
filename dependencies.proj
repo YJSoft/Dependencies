@@ -60,10 +60,19 @@
       <OutputItems Include="$(RootDir)src\freetype2\objs\vc2010\Win32\freetype*.lib" />
     </ItemGroup>
     <Exec Command="cmake -B$(RootDir)src\jansson\ -H$(RootDir)src\jansson\ -G &quot;Visual Studio 14&quot; -DJANSSON_STATIC_CRT=ON -DJANSSON_BUILD_DOCS=OFF"
-          StandardOutputImportance="low"
-          StandardErrorImportance="low" />
+          StandardOutputImportance="normal"
+          StandardErrorImportance="normal" />
     <MSBuild Projects="$(RootDir)src\jansson\jansson.sln" Properties="Configuration=Release" />
     <Copy SourceFiles="src\jansson\lib\Release\jansson.lib" DestinationFolder="$(BinDir)" />
+  </Target>
+
+  <Target Name="sdl2">
+    <Exec Command="git apply --directory=src\sdl patches\sdl.diff"
+          StandardOutputImportance="normal"
+          StandardErrorImportance="normal"
+          ContinueOnError="true" />
+    <MSBuild Projects="$(RootDir)src\sdl\VisualC\SDL\SDL.vcxproj" Properties="Configuration=Release;PlatformToolset=$(PlatformToolset)" />
+    <Copy SourceFiles="$(RootDir)src\sdl\VisualC\SDL\Win32\Release\SDL2.lib" DestinationFolder="$(BinDir)" />
   </Target>
 
   <Target Name="CopyHeaders">
