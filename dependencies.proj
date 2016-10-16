@@ -55,6 +55,17 @@
     <Copy SourceFiles="@(OutputItems)" DestinationFiles="$(BinDir)freetype.lib" />
   </Target>
 
+  <Target Name="jansson">
+    <ItemGroup>
+      <OutputItems Include="$(RootDir)src\freetype2\objs\vc2010\Win32\freetype*.lib" />
+    </ItemGroup>
+    <Exec Command="cmake -B$(RootDir)src\jansson\ -H$(RootDir)src\jansson\ -G &quot;Visual Studio 14&quot; -DJANSSON_STATIC_CRT=ON -DJANSSON_BUILD_DOCS=OFF"
+          StandardOutputImportance="low"
+          StandardErrorImportance="low" />
+    <MSBuild Projects="$(RootDir)src\jansson\jansson.sln" Properties="Configuration=Release" />
+    <Copy SourceFiles="src\jansson\lib\Release\jansson.lib" DestinationFolder="$(BinDir)" />
+  </Target>
+
   <Target Name="CopyHeaders">
     <MakeDir Directories="$(IncludeDir)" />
     <Copy SourceFiles="%(HeaderItems.Identity)" DestinationFolder="$(IncludeDir)%(HeaderItems.Destination)" />
