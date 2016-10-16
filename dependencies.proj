@@ -84,6 +84,19 @@
     <Copy SourceFiles="$(RootDir)src\sdl_ttf\VisualC\Win32\Release\SDL2_ttf.lib" DestinationFolder="$(BinDir)" />
   </Target>
 
+  <Target Name="libpng">
+    <ItemGroup>
+      <OutputItems Include="$(RootDir)src\libpng\projects\vstudio\Release Library\zlib.lib" />
+      <OutputItems Include="$(RootDir)src\libpng\projects\vstudio\Release Library\libpng16.lib" />
+    </ItemGroup>
+    <Exec Command="git apply --ignore-whitespace --directory=src\libpng patches\libpng.diff"
+          StandardOutputImportance="normal"
+          StandardErrorImportance="normal"
+          ContinueOnError="true" />
+    <MSBuild Projects="$(RootDir)src\libpng\projects\vstudio\vstudio.sln" Properties="Configuration=Release Library" />
+    <Copy SourceFiles="@(OutputItems)" DestinationFolder="$(BinDir)" />
+  </Target>
+
   <Target Name="CopyHeaders">
     <MakeDir Directories="$(IncludeDir)" />
     <Copy SourceFiles="%(HeaderItems.Identity)" DestinationFolder="$(IncludeDir)%(HeaderItems.Destination)" />
