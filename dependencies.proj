@@ -5,12 +5,12 @@
     <RootDir>$(MsBuildThisFileDirectory)</RootDir>
     <ArtifactsDir>$(RootDir)artifacts\</ArtifactsDir>
     <IncludeDir>$(ArtifactsDir)include\</IncludeDir>
-    <BinDir Condition="'$(Platform)'=='Win32'">$(RootDir)bin\</BinDir>
-    <BinDir Condition="'$(Platform)'=='x64'">$(RootDir)bin64\</BinDir>
     <PlatformToolset Condition="'$(PlatformToolset)'==''">v140</PlatformToolset>
-    <Platform Condition="'$(Platform)'==''">x64</Platform>
-    <OutputLib Condition="'$(Platform)'=='Win32'">$(ArtifactsDir)openrct2-libs-vs2015-x86.lib</OutputLib>
-    <OutputLib Condition="'$(Platform)'=='x64'">$(ArtifactsDir)openrct2-libs-vs2015-x64.lib</OutputLib>
+    <BinDir>$(RootDir)bin\</BinDir>
+    <OutputLib32>$(ArtifactsDir)openrct2-libs-vs2015-x86.lib</OutputLib32>
+    <OutputLib64>$(ArtifactsDir)openrct2-libs-vs2015-x64.lib</OutputLib64>
+    <OutputLib Condition="'$(Platform)'=='Win32'">$(OutputLib32)</OutputLib>
+    <OutputLib Condition="'$(Platform)'=='x64'">$(OutputLib64)</OutputLib>
     <OutputZip>$(ArtifactsDir)openrct2-libs-vs2015.zip</OutputZip>
   </PropertyGroup>
 
@@ -23,22 +23,23 @@
   </Target>
 
   <Target Name="CreatePkg" Inputs="$(OutputZip)" Outputs="$(OutputZip)">
-    <PropertyGroup>
-      <Platform>Win32</Platform>
-    </PropertyGroup>
-    <CallTarget Targets="Build" />
-    <PropertyGroup>
-      <Platform>x64</Platform>
-    </PropertyGroup>
-    <CallTarget Targets="Build" />
+    <CallTarget Targets="Clean" />
+    <MSBuild Projects="$(RootDir)dependencies.proj" Targets="Build" Properties="Platform=Win32" />
+
+    <Copy SourceFiles="$(OutputLib32)" DestinationFiles="$(RootDir)temp.lib" />
+
+    <CallTarget Targets="Clean" />
+    <MSBuild Projects="$(RootDir)dependencies.proj" Targets="Build" Properties="Platform=x64" />
+
+    <Move SourceFiles="$(RootDir)temp.lib" DestinationFiles="$(OutputLib32)" />
+
     <CallTarget Targets="CopyHeaders" />
     <Exec Command="7z a -tzip -mx9 -mtc=off &quot;$(OutputZip)&quot; &quot;$(ArtifactsDir)*&quot;"
           StandardOutputImportance="normal" />
   </Target>
 
   <Target Name="Build" DependsOnTargets="breakpad;libcurl;libspeexdsp;freetype2;jansson;sdl2;sdl2_ttf;libpng;openssl"
-                       Inputs="$(OutputLib)"
-                       Outputs="$(OutputLib)">
+          Inputs="$(OutputLib)" Outputs="$(OutputLib)">
     <ItemGroup>
       <Libs Include="$(BinDir)*.lib" />
     </ItemGroup>
@@ -58,36 +59,51 @@
     <BreakpadOutputItems Include="$(RootDir)src\breakpad\src\src\client\windows\Release\lib\exception_handler.lib" />
     <BreakpadOutputItems Include="$(RootDir)src\breakpad\src\src\client\windows\Release\lib\crash_report_sender.lib" />
   </ItemGroup>
-  <Target Name="breakpad" Inputs="@(BreakpadOutputItems)" Outputs="@(BreakpadOutputItems)">
-    <MSBuild Projects="$(RootDir)src\breakpad\src\src\client\windows\breakpad_client.sln" Properties="Configuration=Release" />
+  <Target Name="breakpad" Inputs="$(RootDir)src\breakpad\src\src\client\windows\Release\lib\common.lib" Outputs="@(BreakpadOutputItems)">
+    <MSBuild Projects="$(RootDir)src\breakpad\src\src\client\windows\breakpad_client.sln" Properties="Configuration=Release" ContinueOnError="true" />
     <Copy SourceFiles="@(BreakpadOutputItems)" DestinationFolder="$(BinDir)" />
   </Target>
 
   <Target Name="libcurl" Inputs="$(BinDir)libcurl.lib" Outputs="$(BinDir)libcurl.lib">
+    <ItemGroup>
+      <OutputItems Condition="'$(Platform)'=='Win32'" Include="$(RootDir)src\curl\build\Win32\VC14\LIB Release - DLL Windows SSPI\libcurl.lib" />
+      <OutputItems Condition="'$(Platform)'=='x64'" Include="$(RootDir)src\curl\build\Win64\VC14\LIB Release - DLL Windows SSPI\libcurl.lib" />
+    </ItemGroup>
     <Exec Command="git apply --ignore-whitespace --directory=src\curl patches\curl.diff"
+          IgnoreStandardErrorWarningFormat="true"
           StandardOutputImportance="normal"
           StandardErrorImportance="normal"
           ContinueOnError="true" />
     <Exec Command="$(RootDir)src\curl\projects\generate.bat VC14" />
     <MSBuild Projects="$(RootDir)src\curl\projects\Windows\VC14\lib\libcurl.sln" Properties="Configuration=LIB Release - DLL Windows SSPI" />
-    <Copy SourceFiles="$(RootDir)src\curl\build\Win32\VC14\LIB Release - DLL Windows SSPI\libcurl.lib" DestinationFolder="$(BinDir)" />
+    <Copy SourceFiles="@(OutputItems)" DestinationFolder="$(BinDir)" />
   </Target>
 
   <Target Name="libspeexdsp" Inputs="$(BinDir)libspeexdsp.lib" Outputs="$(BinDir)libspeexdsp.lib">
-    <MSBuild Projects="$(RootDir)vsprojects\speexdsp\libspeexdsp.sln" Properties="Configuration=Release Static" />
-    <Copy SourceFiles="$(RootDir)vsprojects\speexdsp\bin\libspeexdsp.lib" DestinationFolder="$(BinDir)" />
+    <ItemGroup>
+      <OutputItems Condition="'$(Platform)'=='Win32'" Include="$(RootDir)vsprojects\speexdsp\bin\libspeexdsp.lib" />
+      <OutputItems Condition="'$(Platform)'=='x64'" Include="$(RootDir)vsprojects\speexdsp\bin64\libspeexdsp.lib" />
+    </ItemGroup>
+    <MSBuild Projects="$(RootDir)vsprojects\speexdsp\libspeexdsp.sln" Properties="Configuration=Release Static;Platform=$(Platform)" />
+    <Copy SourceFiles="@(OutputItems)" DestinationFolder="$(BinDir)" />
   </Target>
 
   <Target Name="freetype2" Inputs="$(BinDir)freetype.lib" Outputs="$(BinDir)freetype.lib">
-    <ItemGroup>
-      <OutputItems Include="$(RootDir)src\freetype2\objs\vc2010\Win32\freetype*.lib" />
+    <ItemGroup Condition="'$(Platform)'=='Win32'">
+      <OutputItems2 Include="$(RootDir)src\freetype2\objs\vc2010\Win32\freetype*.lib" />
+    </ItemGroup>
+    <ItemGroup Condition="'$(Platform)'=='x64'">
+      <OutputItems2 Include="$(RootDir)src\freetype2\objs\vc2010\x64\freetype*.lib" />
     </ItemGroup>
     <MSBuild Projects="$(RootDir)src\freetype2\builds\windows\vc2010\freetype.sln" Properties="Configuration=Release Multithreaded;PlatformToolset=$(PlatformToolset)" />
-    <Copy SourceFiles="@(OutputItems)" DestinationFiles="$(BinDir)freetype.lib" />
+    <Copy SourceFiles="@(OutputItems2)" DestinationFiles="$(BinDir)freetype.lib" />
   </Target>
 
   <Target Name="jansson" Inputs="$(BinDir)jansson.lib" Outputs="$(BinDir)jansson.lib">
-    <Exec Command="cmake -B$(RootDir)src\jansson\ -H$(RootDir)src\jansson\ -G &quot;Visual Studio 14&quot; -DJANSSON_STATIC_CRT=ON -DJANSSON_BUILD_DOCS=OFF"
+    <PropertyGroup>
+      <ArchitectureParam Condition="'$(Platform)'=='x64'">-A x64</ArchitectureParam>
+    </PropertyGroup>
+    <Exec Command="cmake -B$(RootDir)src\jansson\ -H$(RootDir)src\jansson\ -G &quot;Visual Studio 14&quot; $(ArchitectureParam) -DJANSSON_STATIC_CRT=ON -DJANSSON_BUILD_DOCS=OFF"
           StandardOutputImportance="normal"
           StandardErrorImportance="normal" />
     <MSBuild Projects="$(RootDir)src\jansson\jansson.sln" Properties="Configuration=Release" />
@@ -95,29 +111,42 @@
   </Target>
 
   <Target Name="sdl2" Inputs="$(BinDir)SDL2_ttf.lib" Outputs="$(BinDir)SDL2_ttf.lib">
+    <ItemGroup>
+      <OutputItems Condition="'$(Platform)'=='Win32'" Include="$(RootDir)src\sdl\VisualC\SDL\Win32\Release\SDL2.lib" />
+      <OutputItems Condition="'$(Platform)'=='x64'" Include="$(RootDir)src\sdl\VisualC\SDL\x64\Release\SDL2.lib" />
+    </ItemGroup>
     <Exec Command="git apply --ignore-whitespace --directory=src\sdl patches\sdl.diff"
+          IgnoreStandardErrorWarningFormat="true"
           StandardOutputImportance="normal"
           StandardErrorImportance="normal"
           ContinueOnError="true" />
     <MSBuild Projects="$(RootDir)src\sdl\VisualC\SDL\SDL.vcxproj" Properties="Configuration=Release;PlatformToolset=$(PlatformToolset)" />
-    <Copy SourceFiles="$(RootDir)src\sdl\VisualC\SDL\Win32\Release\SDL2.lib" DestinationFolder="$(BinDir)" />
+    <Copy SourceFiles="@(OutputItems)" DestinationFolder="$(BinDir)" />
   </Target>
 
   <Target Name="sdl2_ttf" Inputs="$(BinDir)SDL2_ttf.lib" Outputs="$(BinDir)SDL2_ttf.lib">
+    <ItemGroup>
+      <OutputItems Condition="'$(Platform)'=='Win32'" Include="$(RootDir)src\sdl_ttf\VisualC\Win32\Release\SDL2_ttf.lib" />
+      <OutputItems Condition="'$(Platform)'=='x64'" Include="$(RootDir)src\sdl_ttf\VisualC\x64\Release\SDL2_ttf.lib" />
+    </ItemGroup>
     <Exec Command="git apply --ignore-whitespace --directory=src\sdl_ttf patches\sdl_ttf.diff"
+          IgnoreStandardErrorWarningFormat="true"
           StandardOutputImportance="normal"
           StandardErrorImportance="normal"
           ContinueOnError="true" />
     <MSBuild Projects="$(RootDir)src\sdl_ttf\VisualC\SDL_ttf.vcxproj" Properties="Configuration=Release;PlatformToolset=$(PlatformToolset)" />
-    <Copy SourceFiles="$(RootDir)src\sdl_ttf\VisualC\Win32\Release\SDL2_ttf.lib" DestinationFolder="$(BinDir)" />
+    <Copy SourceFiles="@(OutputItems)" DestinationFolder="$(BinDir)" />
   </Target>
 
   <Target Name="libpng" Inputs="$(BinDir)zlib.lib" Outputs="$(BinDir)zlib.lib;$(BinDir)libpng16.lib">
     <ItemGroup>
-      <OutputItems Include="$(RootDir)src\libpng\projects\vstudio\Release Library\zlib.lib" />
-      <OutputItems Include="$(RootDir)src\libpng\projects\vstudio\Release Library\libpng16.lib" />
+      <OutputItems Condition="'$(Platform)'=='Win32'" Include="$(RootDir)src\libpng\projects\vstudio\Release Library\zlib.lib" />
+      <OutputItems Condition="'$(Platform)'=='Win32'" Include="$(RootDir)src\libpng\projects\vstudio\Release Library\libpng16.lib" />
+      <OutputItems Condition="'$(Platform)'=='x64'" Include="$(RootDir)src\libpng\projects\vstudio\x64\Release Library\zlib.lib" />
+      <OutputItems Condition="'$(Platform)'=='x64'" Include="$(RootDir)src\libpng\projects\vstudio\x64\Release Library\libpng16.lib" />
     </ItemGroup>
     <Exec Command="git apply --ignore-whitespace --directory=src\libpng patches\libpng.diff"
+          IgnoreStandardErrorWarningFormat="true"
           StandardOutputImportance="normal"
           StandardErrorImportance="normal"
           ContinueOnError="true" />

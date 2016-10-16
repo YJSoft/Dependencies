@@ -18,6 +18,7 @@
 x64/
 build/
 [Bb]in/
+[Bb]in64/
 [Oo]bj/
 
 # MSTest test Results
