@@ -1,12 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- msbuild project for build the OpenRCT2 3rd party libraries -->
-<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="CreatePkg">
   <PropertyGroup>
     <RootDir>$(MsBuildThisFileDirectory)</RootDir>
     <ArtifactsDir>$(RootDir)artifacts\</ArtifactsDir>
     <IncludeDir>$(ArtifactsDir)include\</IncludeDir>
-    <BinDir>$(RootDir)bin\</BinDir>
+    <BinDir Condition="'$(Platform)'=='Win32'">$(RootDir)bin\</BinDir>
+    <BinDir Condition="'$(Platform)'=='x64'">$(RootDir)bin64\</BinDir>
     <PlatformToolset Condition="'$(PlatformToolset)'==''">v140</PlatformToolset>
+    <Platform Condition="'$(Platform)'==''">x64</Platform>
+    <OutputLib Condition="'$(Platform)'=='Win32'">$(ArtifactsDir)openrct2-libs-vs2015-x86.lib</OutputLib>
+    <OutputLib Condition="'$(Platform)'=='x64'">$(ArtifactsDir)openrct2-libs-vs2015-x64.lib</OutputLib>
+    <OutputZip>$(ArtifactsDir)openrct2-libs-vs2015.zip</OutputZip>
   </PropertyGroup>
 
   <Target Name="Clean">
@@ -17,25 +22,48 @@
           StandardOutputImportance="normal" />
   </Target>
 
-  <Target Name="Build">
-    <Message Text="Building dependencies..." Importance="high" />
-  </Target>
-
-  <Target Name="breakpad">
+  <Target Name="CreatePkg" Inputs="$(OutputZip)" Outputs="$(OutputZip)">
     <PropertyGroup>
-      <LibDir>src\breakpad\</LibDir>
+      <Platform>Win32</Platform>
     </PropertyGroup>
-    <ItemGroup>
-      <OutputItems Include="$(LibDir)src\src\client\windows\Release\lib\common.lib" />
-      <OutputItems Include="$(LibDir)src\src\client\windows\Release\lib\crash_generation_client.lib" />
-      <OutputItems Include="$(LibDir)src\src\client\windows\Release\lib\exception_handler.lib" />
-      <OutputItems Include="$(LibDir)src\src\client\windows\Release\lib\crash_report_sender.lib" />
-    </ItemGroup>
-    <MSBuild Projects="$(LibDir)src\src\client\windows\breakpad_client.sln" Properties="Configuration=Release" />
-    <Copy SourceFiles="@(OutputItems)" DestinationFolder="$(BinDir)" />
+    <CallTarget Targets="Build" />
+    <PropertyGroup>
+      <Platform>x64</Platform>
+    </PropertyGroup>
+    <CallTarget Targets="Build" />
+    <CallTarget Targets="CopyHeaders" />
+    <Exec Command="7z a -tzip -mx9 -mtc=off &quot;$(OutputZip)&quot; &quot;$(ArtifactsDir)*&quot;"
+          StandardOutputImportance="normal" />
   </Target>
 
-  <Target Name="libcurl">
+  <Target Name="Build" DependsOnTargets="breakpad;libcurl;libspeexdsp;freetype2;jansson;sdl2;sdl2_ttf;libpng;openssl"
+                       Inputs="$(OutputLib)"
+                       Outputs="$(OutputLib)">
+    <ItemGroup>
+      <Libs Include="$(BinDir)*.lib" />
+    </ItemGroup>
+    <PropertyGroup>
+      <LibExe Condition="'$(Platform)'=='Win32'">C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\bin\lib.exe</LibExe>
+      <LibExe Condition="'$(Platform)'=='x64'">C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\bin\amd64\lib.exe</LibExe>
+    </PropertyGroup>
+    <MakeDir Directories="$(ArtifactsDir)" />
+    <Exec Command="&quot;$(LibExe)&quot; /LTCG &quot;/OUT:$(OutputLib)&quot; @(Libs -> '&quot;%(Identity)&quot;', ' ')"
+          StandardOutputImportance="low"
+          IgnoreStandardErrorWarningFormat="true" />
+  </Target>
+
+  <ItemGroup>
+    <BreakpadOutputItems Include="$(RootDir)src\breakpad\src\src\client\windows\Release\lib\common.lib" />
+    <BreakpadOutputItems Include="$(RootDir)src\breakpad\src\src\client\windows\Release\lib\crash_generation_client.lib" />
+    <BreakpadOutputItems Include="$(RootDir)src\breakpad\src\src\client\windows\Release\lib\exception_handler.lib" />
+    <BreakpadOutputItems Include="$(RootDir)src\breakpad\src\src\client\windows\Release\lib\crash_report_sender.lib" />
+  </ItemGroup>
+  <Target Name="breakpad" Inputs="@(BreakpadOutputItems)" Outputs="@(BreakpadOutputItems)">
+    <MSBuild Projects="$(RootDir)src\breakpad\src\src\client\windows\breakpad_client.sln" Properties="Configuration=Release" />
+    <Copy SourceFiles="@(BreakpadOutputItems)" DestinationFolder="$(BinDir)" />
+  </Target>
+
+  <Target Name="libcurl" Inputs="$(BinDir)libcurl.lib" Outputs="$(BinDir)libcurl.lib">
     <Exec Command="git apply --ignore-whitespace --directory=src\curl patches\curl.diff"
           StandardOutputImportance="normal"
           StandardErrorImportance="normal"
@@ -45,12 +73,12 @@
     <Copy SourceFiles="$(RootDir)src\curl\build\Win32\VC14\LIB Release - DLL Windows SSPI\libcurl.lib" DestinationFolder="$(BinDir)" />
   </Target>
 
-  <Target Name="libspeexdsp">
+  <Target Name="libspeexdsp" Inputs="$(BinDir)libspeexdsp.lib" Outputs="$(BinDir)libspeexdsp.lib">
     <MSBuild Projects="$(RootDir)vsprojects\speexdsp\libspeexdsp.sln" Properties="Configuration=Release Static" />
     <Copy SourceFiles="$(RootDir)vsprojects\speexdsp\bin\libspeexdsp.lib" DestinationFolder="$(BinDir)" />
   </Target>
 
-  <Target Name="freetype2">
+  <Target Name="freetype2" Inputs="$(BinDir)freetype.lib" Outputs="$(BinDir)freetype.lib">
     <ItemGroup>
       <OutputItems Include="$(RootDir)src\freetype2\objs\vc2010\Win32\freetype*.lib" />
     </ItemGroup>
@@ -58,15 +86,15 @@
     <Copy SourceFiles="@(OutputItems)" DestinationFiles="$(BinDir)freetype.lib" />
   </Target>
 
-  <Target Name="jansson">
+  <Target Name="jansson" Inputs="$(BinDir)jansson.lib" Outputs="$(BinDir)jansson.lib">
     <Exec Command="cmake -B$(RootDir)src\jansson\ -H$(RootDir)src\jansson\ -G &quot;Visual Studio 14&quot; -DJANSSON_STATIC_CRT=ON -DJANSSON_BUILD_DOCS=OFF"
           StandardOutputImportance="normal"
           StandardErrorImportance="normal" />
     <MSBuild Projects="$(RootDir)src\jansson\jansson.sln" Properties="Configuration=Release" />
-    <Copy SourceFiles="src\jansson\lib\Release\jansson.lib" DestinationFolder="$(BinDir)" />
+    <Copy SourceFiles="$(RootDir)src\jansson\lib\Release\jansson.lib" DestinationFolder="$(BinDir)" />
   </Target>
 
-  <Target Name="sdl2">
+  <Target Name="sdl2" Inputs="$(BinDir)SDL2_ttf.lib" Outputs="$(BinDir)SDL2_ttf.lib">
     <Exec Command="git apply --ignore-whitespace --directory=src\sdl patches\sdl.diff"
           StandardOutputImportance="normal"
           StandardErrorImportance="normal"
@@ -75,7 +103,7 @@
     <Copy SourceFiles="$(RootDir)src\sdl\VisualC\SDL\Win32\Release\SDL2.lib" DestinationFolder="$(BinDir)" />
   </Target>
 
-  <Target Name="sdl2_ttf">
+  <Target Name="sdl2_ttf" Inputs="$(BinDir)SDL2_ttf.lib" Outputs="$(BinDir)SDL2_ttf.lib">
     <Exec Command="git apply --ignore-whitespace --directory=src\sdl_ttf patches\sdl_ttf.diff"
           StandardOutputImportance="normal"
           StandardErrorImportance="normal"
@@ -84,7 +112,7 @@
     <Copy SourceFiles="$(RootDir)src\sdl_ttf\VisualC\Win32\Release\SDL2_ttf.lib" DestinationFolder="$(BinDir)" />
   </Target>
 
-  <Target Name="libpng">
+  <Target Name="libpng" Inputs="$(BinDir)zlib.lib" Outputs="$(BinDir)zlib.lib;$(BinDir)libpng16.lib">
     <ItemGroup>
       <OutputItems Include="$(RootDir)src\libpng\projects\vstudio\Release Library\zlib.lib" />
       <OutputItems Include="$(RootDir)src\libpng\projects\vstudio\Release Library\libpng16.lib" />
@@ -97,7 +125,7 @@
     <Copy SourceFiles="@(OutputItems)" DestinationFolder="$(BinDir)" />
   </Target>
 
-  <Target Name="openssl">
+  <Target Name="openssl" Inputs="$(BinDir)libeay32.lib" Outputs="$(BinDir)libeay32.lib">
     <PropertyGroup>
       <TempDir>$(RootDir)temp\</TempDir>
       <OpenSSLVersion>1.0.2j</OpenSSLVersion>
