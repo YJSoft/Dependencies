@@ -20,6 +20,20 @@
     <Message Text="Building dependencies..." Importance="high" />
   </Target>
 
+  <Target Name="breakpad">
+    <PropertyGroup>
+      <LibDir>src\breakpad\</LibDir>
+    </PropertyGroup>
+    <ItemGroup>
+      <OutputItems Include="$(LibDir)src\src\client\windows\Release\lib\common.lib" />
+      <OutputItems Include="$(LibDir)src\src\client\windows\Release\lib\crash_generation_client.lib" />
+      <OutputItems Include="$(LibDir)src\src\client\windows\Release\lib\exception_handler.lib" />
+      <OutputItems Include="$(LibDir)src\src\client\windows\Release\lib\crash_report_sender.lib" />
+    </ItemGroup>
+    <MSBuild Projects="$(LibDir)src\src\client\windows\breakpad_client.sln" Properties="Configuration=Release" />
+    <Copy SourceFiles="@(OutputItems)" DestinationFolder="$(BinDir)" />
+  </Target>
+
   <Target Name="libspeexdsp">
     <MSBuild Projects="$(RootDir)vsprojects\speexdsp\libspeexdsp.sln" Properties="Configuration=Release Static" />
     <Copy SourceFiles="$(RootDir)vsprojects\speexdsp\bin\libspeexdsp.lib" DestinationFolder="$(BinDir)" />
