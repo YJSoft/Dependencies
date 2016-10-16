@@ -53,19 +53,25 @@
     <HeaderItems Include="src\sdl_ttf\*.h">
       <Destination>sdl_ttf</Destination>
     </HeaderItems>
-    <HeaderItems Include="src\libpng\*.h">
+    <HeaderItems Include="src\libpng\png.h">
       <Destination>libpng</Destination>
     </HeaderItems>
-    <HeaderItems Include="src\zlib\*.h">
+    <HeaderItems Include="src\libpng\pngconf.h">
+      <Destination>libpng</Destination>
+    </HeaderItems>
+    <HeaderItems Include="src\libpng\pnglibconf.h">
+      <Destination>libpng</Destination>
+    </HeaderItems>
+    <HeaderItems Include="src\zlib\zlib.h">
+      <Destination>zlib</Destination>
+    </HeaderItems>
+    <HeaderItems Include="src\zlib\zconf.h">
       <Destination>zlib</Destination>
     </HeaderItems>
     <HeaderItems Include="src\jansson\include\*.h">
       <Destination>jansson</Destination>
     </HeaderItems>
-    <HeaderItems Include="src\libspeex\*.h">
-      <Destination>libspeex</Destination>
-    </HeaderItems>
-    <HeaderItems Include="src\libspeex\speex\*.h">
+    <HeaderItems Include="src\speexdsp\include\speex\*.h">
       <Destination>libspeex\speex</Destination>
     </HeaderItems>
     <HeaderItems Include="src\curl\include\curl\*.h">
