@@ -36,7 +36,10 @@
   </Target>
 
   <Target Name="libcurl">
-    <Exec Command="git apply --directory=src\curl patches\curl.diff" StandardOutputImportance="normal" StandardErrorImportance="normal" ContinueOnError="true" />
+    <Exec Command="git apply --ignore-whitespace --directory=src\curl patches\curl.diff"
+          StandardOutputImportance="normal"
+          StandardErrorImportance="normal"
+          ContinueOnError="true" />
     <Exec Command="$(RootDir)src\curl\projects\generate.bat VC14" />
     <MSBuild Projects="$(RootDir)src\curl\projects\Windows\VC14\lib\libcurl.sln" Properties="Configuration=LIB Release - DLL Windows SSPI" />
     <Copy SourceFiles="$(RootDir)src\curl\build\Win32\VC14\LIB Release - DLL Windows SSPI\libcurl.lib" DestinationFolder="$(BinDir)" />
@@ -56,9 +59,6 @@
   </Target>
 
   <Target Name="jansson">
-    <ItemGroup>
-      <OutputItems Include="$(RootDir)src\freetype2\objs\vc2010\Win32\freetype*.lib" />
-    </ItemGroup>
     <Exec Command="cmake -B$(RootDir)src\jansson\ -H$(RootDir)src\jansson\ -G &quot;Visual Studio 14&quot; -DJANSSON_STATIC_CRT=ON -DJANSSON_BUILD_DOCS=OFF"
           StandardOutputImportance="normal"
           StandardErrorImportance="normal" />
@@ -67,12 +67,21 @@
   </Target>
 
   <Target Name="sdl2">
-    <Exec Command="git apply --directory=src\sdl patches\sdl.diff"
+    <Exec Command="git apply --ignore-whitespace --directory=src\sdl patches\sdl.diff"
           StandardOutputImportance="normal"
           StandardErrorImportance="normal"
           ContinueOnError="true" />
     <MSBuild Projects="$(RootDir)src\sdl\VisualC\SDL\SDL.vcxproj" Properties="Configuration=Release;PlatformToolset=$(PlatformToolset)" />
     <Copy SourceFiles="$(RootDir)src\sdl\VisualC\SDL\Win32\Release\SDL2.lib" DestinationFolder="$(BinDir)" />
+  </Target>
+
+  <Target Name="sdl2_ttf">
+    <Exec Command="git apply --ignore-whitespace --directory=src\sdl_ttf patches\sdl_ttf.diff"
+          StandardOutputImportance="normal"
+          StandardErrorImportance="normal"
+          ContinueOnError="true" />
+    <MSBuild Projects="$(RootDir)src\sdl_ttf\VisualC\SDL_ttf.vcxproj" Properties="Configuration=Release;PlatformToolset=$(PlatformToolset)" />
+    <Copy SourceFiles="$(RootDir)src\sdl_ttf\VisualC\Win32\Release\SDL2_ttf.lib" DestinationFolder="$(BinDir)" />
   </Target>
 
   <Target Name="CopyHeaders">
