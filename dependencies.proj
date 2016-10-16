@@ -5,6 +5,7 @@
     <RootDir>$(MsBuildThisFileDirectory)</RootDir>
     <ArtifactsDir>$(RootDir)artifacts\</ArtifactsDir>
     <IncludeDir>$(ArtifactsDir)include\</IncludeDir>
+    <BinDir>$(RootDir)bin\</BinDir>
   </PropertyGroup>
 
   <Target Name="Clean">
@@ -17,6 +18,11 @@
 
   <Target Name="Build">
     <Message Text="Building dependencies..." Importance="high" />
+  </Target>
+
+  <Target Name="libspeexdsp">
+    <MSBuild Projects="$(RootDir)vsprojects\speexdsp\libspeexdsp.sln" Properties="Configuration=Release Static" />
+    <Copy SourceFiles="$(RootDir)vsprojects\speexdsp\bin\libspeexdsp.lib" DestinationFolder="$(BinDir)" />
   </Target>
 
   <Target Name="CopyHeaders">
