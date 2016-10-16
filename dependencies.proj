@@ -6,6 +6,7 @@
     <ArtifactsDir>$(RootDir)artifacts\</ArtifactsDir>
     <IncludeDir>$(ArtifactsDir)include\</IncludeDir>
     <BinDir>$(RootDir)bin\</BinDir>
+    <PlatformToolset Condition="'$(PlatformToolset)'==''">v140</PlatformToolset>
   </PropertyGroup>
 
   <Target Name="Clean">
@@ -44,6 +45,14 @@
   <Target Name="libspeexdsp">
     <MSBuild Projects="$(RootDir)vsprojects\speexdsp\libspeexdsp.sln" Properties="Configuration=Release Static" />
     <Copy SourceFiles="$(RootDir)vsprojects\speexdsp\bin\libspeexdsp.lib" DestinationFolder="$(BinDir)" />
+  </Target>
+
+  <Target Name="freetype2">
+    <ItemGroup>
+      <OutputItems Include="$(RootDir)src\freetype2\objs\vc2010\Win32\freetype*.lib" />
+    </ItemGroup>
+    <MSBuild Projects="$(RootDir)src\freetype2\builds\windows\vc2010\freetype.sln" Properties="Configuration=Release Multithreaded;PlatformToolset=$(PlatformToolset)" />
+    <Copy SourceFiles="@(OutputItems)" DestinationFiles="$(BinDir)freetype.lib" />
   </Target>
 
   <Target Name="CopyHeaders">
