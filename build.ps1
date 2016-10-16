@@ -90,7 +90,7 @@ Copy-Item -Force ".\src\libpng\projects\vstudio\Release Library\zlib.lib"     $b
 # Build lipspeexdsp
 Write-Host "Building libspeexdsp..." -ForegroundColor Cyan
 msbuild ".\vsprojects\speexdsp\libspeexdsp.sln" "/p:Configuration=Release Static" "/p:Platform=Win32" "/p:PlatformToolset=v140" "/v:minimal"
-Copy-Item -Force ".\vsprojects\speexdsp\Release Static\libspeexdsp.lib" $binDir
+Copy-Item -Force ".\vsprojects\speexdsp\bin\libspeexdsp.lib" $binDir
 
 if ($buildOpenSSL)
 {
