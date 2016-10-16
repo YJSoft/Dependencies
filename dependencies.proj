@@ -34,6 +34,13 @@
     <Copy SourceFiles="@(OutputItems)" DestinationFolder="$(BinDir)" />
   </Target>
 
+  <Target Name="libcurl">
+    <Exec Command="git apply --directory=src\curl patches\curl.diff" StandardOutputImportance="normal" StandardErrorImportance="normal" ContinueOnError="true" />
+    <Exec Command="$(RootDir)src\curl\projects\generate.bat VC14" />
+    <MSBuild Projects="$(RootDir)src\curl\projects\Windows\VC14\lib\libcurl.sln" Properties="Configuration=LIB Release - DLL Windows SSPI" />
+    <Copy SourceFiles="$(RootDir)src\curl\build\Win32\VC14\LIB Release - DLL Windows SSPI\libcurl.lib" DestinationFolder="$(BinDir)" />
+  </Target>
+
   <Target Name="libspeexdsp">
     <MSBuild Projects="$(RootDir)vsprojects\speexdsp\libspeexdsp.sln" Properties="Configuration=Release Static" />
     <Copy SourceFiles="$(RootDir)vsprojects\speexdsp\bin\libspeexdsp.lib" DestinationFolder="$(BinDir)" />
