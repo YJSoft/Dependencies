@@ -1,6 +1,6 @@
 #########################################################
 # Script to build all the libraries required for OpenRCT2
-# into a single lib file for x86.
+# into a single lib file for XP x86.
 #########################################################
 #$ErrorActionPreference = "Stop"
 
