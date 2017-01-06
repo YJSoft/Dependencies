@@ -28,16 +28,6 @@ New-Item -Force -ItemType Directory $artifactsDir > $null
 # therefore we do a git clean and checkout. We have to temporarily rename artifacts so that
 # doesn't get removed.
 .\build.ps1
-Write-Host "-----------------------------------------------------" -ForegroundColor Cyan
-Write-Host
-Write-Host "Cleaning for build64"
-Move-Item $artifactsDir .\artifacts_noclean
-.\clean.bat
-git checkout .
-Write-Host "-----------------------------------------------------" -ForegroundColor Cyan
-Move-Item .\artifacts_noclean $artifactsDir
-.\build64.ps1
-Write-Host "-----------------------------------------------------" -ForegroundColor Cyan
 
 # Copy headers
 function CopyHeaders($src, $dst)
